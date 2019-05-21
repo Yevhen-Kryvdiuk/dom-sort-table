@@ -1,51 +1,71 @@
 const table = document.querySelector('table');
-const tableHead = table.rows[0];
+const tableHead = document.querySelector('thead');
+
 
 tableHead.addEventListener('click', function (event) {
-    const {cellIndex: sortParam, nodeName} = event.target;
+    const sortParam = event.target.dataset.sortParam;
+    const nodeName = event.target.nodeName;
+    const tableBody = table.tBodies[0];
+
     if (nodeName === 'TH') {
-        const data = sortTableData(table, sortParam);
-        changeTableData(table, data);
+        const sortedData = sortTableData(tableBody, sortParam);
+        const newTableBody = changeTableData(sortedData);
+        table.replaceChild(newTableBody, tableBody);
     }
 });
 
-function getTableData(table) {
-    const tableRows = [...table.rows];
+function getTableData(tableBody) {
+    const tableRows = [...tableBody.rows];
+
     const data = [];
-    for (let i = 1; i < tableRows.length; i++) {
-        const tableRow = tableRows[i];
-        data[i-1] = [tableRow.cells[0].innerHTML, tableRow.cells[1].innerHTML];
-    }
+    tableRows.forEach((tableRow) => {
+        const Row = [...tableRow.cells];
+
+        const objk = {};
+        Row.forEach((item) => {
+            objk[item.dataset.sortParam] = item.innerHTML;
+        });
+        data.push(objk);
+    });
+
     return data;
 }
 
 
-function sortTableData(table, sortParam) {
-    const data = getTableData(table);
-    if (sortParam === 0) {
+function sortTableData(tableBody, sortParam) {
+    const data = getTableData(tableBody);
+
+    if (sortParam === 'age') {
         data.sort((a, b) => {
             return Number(a[sortParam]) - Number(b[sortParam]);
         });
-    } else {
+    }
+    if (sortParam === 'name') {
         data.sort((a, b) => {
             if (a[sortParam] > b[sortParam]) {
                 return 1;
             }
             if (a[sortParam] < b[sortParam]) {
                 return -1;
-                }
+            }
             return 0;
         });
     }
     return data;
 }
-function changeTableData(table, data) {
-    const tableRows = [...table.rows];
-    for (let i = 0; i < data.length; i++) {
-        const j = i + 1;
-        const tableRow = tableRows[j];
-        const dataRow = data[i];
-        tableRow.cells[0].innerText = dataRow[0];
-        tableRow.cells[1].innerText = dataRow[1];
-    }
+
+function changeTableData(data) {
+    const newTableBody = document.createElement('tbody');
+    data.forEach((item) => {
+        const tr = document.createElement('tr');
+        for (let key in item) {
+            const td = document.createElement('td');
+            td.dataset.sortParam = key;
+            td.innerText = item[key];
+            tr.appendChild(td);
+        }
+        newTableBody.appendChild(tr);
+    });
+
+    return newTableBody;
 }
